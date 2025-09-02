@@ -1,0 +1,9 @@
+
+/venv
+.idea
+*.pytest_cache
+__pycache__/
+*.pyc
+chromedriver
+chromedriver.exe
+.DS_Store
