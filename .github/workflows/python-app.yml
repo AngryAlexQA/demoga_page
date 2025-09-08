@@ -1,4 +1,4 @@
-name: Python Tests
+name: Python UI Tests
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test:
+  ui-tests:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,6 +35,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip xvfb libxi6 libgconf-2-4
+          wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get install -y /tmp/chrome.deb || sudo apt --fix-broken install -y
+          google-chrome --version
+
+      - name: Install ChromeDriver matching Chrome
+        run: |
+          CHROME_VERSION=$(google-chrome --product-version | cut -d. -f1)
+          echo "Chrome major version: $CHROME_VERSION"
+          LATEST_CHROMEDRIVER_JSON=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+          echo "Chromedriver version to download: $LATEST_CHROMEDRIVER_JSON"
+          wget -q -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${LATEST_CHROMEDRIVER_JSON}/chromedriver_linux64.zip"
+          unzip -qq /tmp/chromedriver.zip -d /tmp
+          sudo mv /tmp/chromedriver /usr/local/bin/chromedriver
+          sudo chmod +x /usr/local/bin/chromedriver
+          chromedriver --version
+
       - name: Generate pytest.ini from YAML (if config exists)
         working-directory: ${{ github.workspace }}
         run: |
@@ -43,9 +63,6 @@ jobs:
 import yaml
 from pathlib import Path
 cfg_path = Path("config/pytest_config.yaml")
-if not cfg_path.exists():
-    print("No config/pytest_config.yaml, skipping generation.")
-    raise SystemExit(0)
 y = yaml.safe_load(cfg_path.read_text())
 pytest_cfg = y.get("pytest", {})
 lines = ["[pytest]\n"]
@@ -58,7 +75,6 @@ if "addopts" in pytest_cfg:
     for opt in pytest_cfg["addopts"]:
         lines.append(f"    {opt}\n")
 if "alluredir" in pytest_cfg:
-    # ensure addopts contains --alluredir too
     lines.append(f"--alluredir={pytest_cfg['alluredir']}\n")
 if "reruns" in pytest_cfg:
     lines.append(f"reruns = {pytest_cfg['reruns']}\n")
@@ -79,21 +95,31 @@ print('pytest.ini generated')
 PY
           else
             echo "No config/pytest_config.yaml found — skipping pytest.ini generation."
-
+      
       - name: Prepare reports directories
         run: |
           mkdir -p reports/allure-results
           mkdir -p reports/allure-report || true
 
-      - name: Run tests with pytest
-        continue-on-error: true
+      - name: Start Xvfb (for non-headless tests, optional)
+        if: ${{ env.USE_XVFB == 'true' }}
         run: |
-          pytest -v --junitxml=test-results.xml
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1920x1080x24 &>/dev/null &
+          export DISPLAY=:99
+
+      - name: Run UI tests with pytest (Chrome headless)
+        continue-on-error: true
         env:
-          # если нужны переменные окружения для браузера/окружения, укажите здесь
-          # BROWSER: chrome
-          # ENVIRONMENT: test
+          BROWSER: chrome
+          HEADLESS: "true"
           PYTHONUNBUFFERED: 1
+        run: |
+          # Ensure chromedriver is on PATH
+          export PATH="/usr/local/bin:$PATH"
+          # Example: you can override browser via env var in your fixtures
+          echo "Running tests with BROWSER=$BROWSER HEADLESS=$HEADLESS"
+          pytest -v --junitxml=test-results.xml
 
       - name: Upload JUnit test-results.xml
         if: always()
@@ -102,7 +128,7 @@ PY
           name: junit-test-results
           path: test-results.xml
 
-      - name: Publish test results (GitHub action for JUnit)
+      - name: Publish test results (JUnit)
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
@@ -116,15 +142,12 @@ PY
           path: reports/allure-results
 
       - name: Generate Allure report (optional)
-        if: always()
+        if: steps.upload-allure-results.outcome != 'failure'
         run: |
-          # Установка allurectl для генерации отчетa локально в CI (не обязательна)
-          # Попробуйте установить allure-commandline или allurectl; ниже - пример с allurectl
-          set -e
+          # attempt to generate Allure report if results exist
           if [ -d reports/allure-results ] && [ "$(ls -A reports/allure-results)" ]; then
-            echo "Generating allure report..."
-            curl -sSL https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz -o /tmp/allure.tgz || true
-            mkdir -p /tmp/allure && tar -xzf /tmp/allure.tgz -C /tmp/allure --strip-components=1 || true
+            wget -q -O /tmp/allure.tgz https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
+            mkdir -p /tmp/allure && tar -xzf /tmp/allure.tgz -C /tmp/allure --strip-components=1
             /tmp/allure/bin/allure generate reports/allure-results -o reports/allure-report || true
             echo "Allure report generated at reports/allure-report"
           else
