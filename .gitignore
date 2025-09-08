@@ -8,3 +8,4 @@ chromedriver
 chromedriver.exe
 .DS_Store
 test_execution.log
+.gitignore
