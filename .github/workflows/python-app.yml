@@ -1,34 +1,133 @@
-name: Python Tests
+# pytest configuration converted from pytest.ini to YAML
+# Note: pytest itself does not natively read YAML for configuration.
+# This file can be used for documentation, CI, or to generate pytest.ini/pyproject.toml.
+pytest:
+  # ==================== ПУТИ К ТЕСТАМ ====================
+  testpaths: "tests"
+  python_files: "test_*.py"
+  python_classes: "Test*"
+  python_functions: "test_*"
+
+  # ==================== ОСНОВНЫЕ НАСТРОЙКИ ЗАПУСКА ====================
+  addopts:
+    - -v                   # Подробный вывод (verbose)
+    - --tb=short           # Короткий формат traceback
+    - --strict-markers     # Строгая проверка маркеров
+    - --durations=10       # Показать 10 самых медленных тестов
+    - --color=yes          # Цветной вывод
+    - --showlocals         # Показать локальные переменные при ошибках
+
+  # ==================== НАСТРОЙКИ ОТЧЕТОВ ====================
+  junit_family: "xunit2"
+  junit_suite_name: "DemoQA Automation Tests"
+  junit_logging: "all"
+
+  # HTML отчет (раскомментируйте/добавьте к addopts при необходимости)
+  # html_report: "reports/pytest_report.html"
+  # html_self_contained: true
+
+  # Allure (директория результатов; также можно добавить в addopts: --alluredir=reports/allure-results)
+  alluredir: "reports/allure-results"
+
+  # ==================== НАСТРОЙКИ ПОВТОРНЫХ ЗАПУСКОВ ====================
+  reruns: 2
+  reruns_delay: 1
+
+  # ==================== НАСТРОЙКИ ПАРАЛЛЕЛЬНОГО ЗАПУСКА ====================
+  # numprocesses: auto
+  # maxprocesses: 4
+  # dist: loadfile
+
+  # ==================== НАСТРОЙКИ ДЛЯ SELENIUM ====================
+  selenium:
+    driver_timeout: 30
+    implicit_wait: 10
+    page_load_timeout: 30
+
+  # ==================== КАСТОМНЫЕ МАРКЕРЫ ====================
+  markers:
+    - name: "smoke"
+      description: "Smoke tests - базовая проверка функциональности"
+    - name: "regression"
+      description: "Regression tests - полный регрессионный набор"
+    - name: "ui"
+      description: "UI tests - тесты пользовательского интерфейса"
+    - name: "slow"
+      description: "Slow tests - длительные тесты (требуют больше времени)"
+    - name: "elements"
+      description: "Tests for Elements page"
+    - name: "forms"
+      description: "Tests for Forms page"
+    - name: "alerts"
+      description: "Tests for Alerts, Frame & Windows page"
+    - name: "widgets"
+      description: "Tests for Widgets page"
+    - name: "interactions"
+      description: "Tests for Interactions page"
+
+  # ==================== НАСТРОЙКИ ЛОГИРОВАНИЯ ====================
+  logging:
+    log_level: "INFO"
+    log_format: "%(asctime)s %(levelname)s %(message)s"
+    log_date_format: "%Y-%m-%d %H:%M:%S"
+
+  # ==================== НАСТРОЙКИ ПЛАГИНОВ ====================
+  html:
+    title: "DemoQA Test Report"
+    logo: ""
+    environment:
+      Browser: "Chrome"
+      Environment: "Test"
+      Platform: "Web"
+
+  allure:
+    report_dir: "reports/allure-report"
+    environment:
+      browser: "chrome"
+      environment: "test"
+      platform: "web"
+
+  # ==================== НАСТРОЙКИ БЕЗОПАСНОСТИ ====================
+  filterwarnings:
+    - "ignore::DeprecationWarning"
+    - "ignore::UserWarning"
+
+# ==================== GitHub Actions workflow (converted from bottom of the ini) ====================
+name: "Python Tests"
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Test with pytest
-      run: |
-        pytest -v --junitxml=test-results.xml 
+      - name: Test with pytest
+        run: |
+          pytest -v --junitxml=test-results.xml
 
-    - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: test-results.xml
+      - name: Publish Test Results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: test-results.xml
