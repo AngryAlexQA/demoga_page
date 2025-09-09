@@ -25,5 +25,5 @@ webdriver-manager==4.0.1
 pytest-xdist==3.5.0
 allure-pytest==2.13.2
 pytest-allure-adaptor
-namedlist==1.7.1
+namedlist
 allure-python-commons==2.10.2
