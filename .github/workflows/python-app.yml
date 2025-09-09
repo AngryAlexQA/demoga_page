@@ -82,7 +82,7 @@ jobs:
           echo "=== Tests directory ==="
           ls -la tests/ 2>/dev/null || echo "No tests directory found"
 
-      - name: Run UI tests with pytest
+            - name: Run UI tests with pytest
         env:
           HEADLESS: "true"
           PYTHONUNBUFFERED: "1"
@@ -104,19 +104,19 @@ jobs:
             echo "No test files found in tests directory, creating demo test..."
             # Создаем минимальный тест для демонстрации
             mkdir -p tests
-            cat << 'EOF' > tests/test_demo.py
-import pytest
-def test_example():
-    """Example test that always passes"""
-    assert True
-class TestExample:
-    def test_class_example(self):
-        """Example class test that always passes"""
-        assert True
-EOF
+            echo 'import pytest' > tests/test_demo.py
+            echo '' >> tests/test_demo.py
+            echo 'def test_example():' >> tests/test_demo.py
+            echo '    """Example test that always passes"""' >> tests/test_demo.py
+            echo '    assert True' >> tests/test_demo.py
+            echo '' >> tests/test_demo.py
+            echo 'class TestExample:' >> tests/test_demo.py
+            echo '    def test_class_example(self):' >> tests/test_demo.py
+            echo '        """Example class test that always passes"""' >> tests/test_demo.py
+            echo '        assert True' >> tests/test_demo.py
             pytest -v --junitxml=junit-results.xml tests/test_demo.py || echo "Demo test execution completed"
           fi
-
+          
       - name: Check and create test results
         if: always()
         run: |
