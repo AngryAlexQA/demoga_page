@@ -53,11 +53,11 @@ jobs:
 
       - name: Install ChromeDriver via webdriver-manager
         run: |
-          python - <<'PY'
-from webdriver_manager.chrome import ChromeDriverManager
-print("Installing Chromedriver...")
-ChromeDriverManager().install()
-PY
+         python - <<'PY'
+         from webdriver_manager.chrome import ChromeDriverManager
+         print("Installing Chromedriver...")
+         ChromeDriverManager().install()
+         PY
 
       - name: Create default pytest.ini if not exists
         run: |
