@@ -54,7 +54,6 @@ jobs:
 
       - name: Install ChromeDriver
         run: |
-          # Устанавливаем последнюю версию ChromeDriver через webdriver-manager
           pip install webdriver-manager
           python -c "from webdriver_manager.chrome import ChromeDriverManager; ChromeDriverManager().install()"
 
@@ -84,16 +83,10 @@ EOL
           HEADLESS: "true"
           PYTHONUNBUFFERED: "1"
         run: |
-          # Устанавливаем переменные окружения для Chrome
           export CHROME_BIN=/usr/bin/google-chrome
           export CHROMEDRIVER_BIN=/usr/local/bin/chromedriver
-          
           echo "Running tests in headless mode"
-          pytest -v \
-            --junitxml=junit-results.xml \
-            --alluredir=allure-results \
-            --reruns=1 \
-            --reruns-delay=2
+          pytest -v --junitxml=junit-results.xml --alluredir=allure-results --reruns=1 --reruns-delay=2
 
       - name: Upload JUnit test results
         if: always()
@@ -112,7 +105,6 @@ EOL
       - name: Install Allure CLI
         if: always()
         run: |
-          # Устанавливаем Allure CLI
           sudo apt-get install -y default-jre
           wget -q -O allure-2.21.0.tgz https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
           sudo tar -zxvf allure-2.21.0.tgz -C /opt/
@@ -141,4 +133,3 @@ EOL
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: junit-results.xml
-        
