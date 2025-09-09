@@ -53,25 +53,19 @@ jobs:
 
       - name: Install ChromeDriver via webdriver-manager
         run: |
-          python - <<'PY'
-          from webdriver_manager.chrome import ChromeDriverManager
-          print("Installing Chromedriver...")
-          ChromeDriverManager().install()
-          PY
+          python -c "from webdriver_manager.chrome import ChromeDriverManager; ChromeDriverManager().install()"
 
       - name: Create default pytest.ini if not exists
         run: |
           if [ ! -f pytest.ini ]; then
-            cat > pytest.ini <<'EOF'
-[pytest]
-testpaths = tests
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
-addopts = -v --tb=short --reruns 1 --reruns-delay 2 --junitxml=junit-results.xml --alluredir=allure-results
-junit_family = xunit2
-junit_suite_name = UI Tests
-EOF
+            echo "[pytest]" > pytest.ini
+            echo "testpaths = tests" >> pytest.ini
+            echo "python_files = test_*.py" >> pytest.ini
+            echo "python_classes = Test*" >> pytest.ini
+            echo "python_functions = test_*" >> pytest.ini
+            echo "addopts = -v --tb=short --reruns 1 --reruns-delay 2 --junitxml=junit-results.xml --alluredir=allure-results" >> pytest.ini
+            echo "junit_family = xunit2" >> pytest.ini
+            echo "junit_suite_name = UI Tests" >> pytest.ini
             echo "Created default pytest.ini"
           else
             echo "pytest.ini already exists, skipping creation"
@@ -97,8 +91,8 @@ EOF
           export CHROME_BIN=/usr/bin/google-chrome
           export PATH="/usr/local/bin:$PATH"
 
-          # Start Xvfb for headless display (optional but safe)
-          Xvfb :99 -screen 0 1920x1080x24 &>/dev/null &
+          # Start Xvfb for headless display
+          Xvfb :99 -screen 0 1920x1080x24 &
           export DISPLAY=:99
           sleep 2
 
@@ -108,16 +102,14 @@ EOF
           else
             echo "No tests found — creating demo test file"
             mkdir -p tests
-            cat > tests/test_demo.py <<'PYTEST'
-import pytest
-
-def test_example():
-    assert True
-
-class TestExample:
-    def test_class_example(self):
-        assert True
-PYTEST
+            echo 'import pytest' > tests/test_demo.py
+            echo '' >> tests/test_demo.py
+            echo 'def test_example():' >> tests/test_demo.py
+            echo '    assert True' >> tests/test_demo.py
+            echo '' >> tests/test_demo.py
+            echo 'class TestExample:' >> tests/test_demo.py
+            echo '    def test_class_example(self):' >> tests/test_demo.py
+            echo '        assert True' >> tests/test_demo.py
             pytest -v || true
           fi
 
@@ -126,15 +118,13 @@ PYTEST
         run: |
           if [ ! -f junit-results.xml ]; then
             echo "No junit-results.xml produced by pytest; creating minimal one"
-            cat > junit-results.xml <<'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<testsuites>
-  <testsuite errors="0" failures="0" name="pytest" skipped="0" tests="2" time="0.01">
-    <testcase classname="tests.test_demo" name="test_example" time="0.001"/>
-    <testcase classname="tests.test_demo.TestExample" name="test_class_example" time="0.001"/>
-  </testsuite>
-</testsuites>
-XML
+            echo '<?xml version="1.0" encoding="utf-8"?>' > junit-results.xml
+            echo '<testsuites>' >> junit-results.xml
+            echo '  <testsuite errors="0" failures="0" name="pytest" skipped="0" tests="2" time="0.01">' >> junit-results.xml
+            echo '    <testcase classname="tests.test_demo" name="test_example" time="0.001"/>' >> junit-results.xml
+            echo '    <testcase classname="tests.test_demo.TestExample" name="test_class_example" time="0.001"/>' >> junit-results.xml
+            echo '  </testsuite>' >> junit-results.xml
+            echo '</testsuites>' >> junit-results.xml
           else
             echo "Found junit-results.xml"
             ls -la junit-results.xml
@@ -157,10 +147,11 @@ XML
       - name: Install Allure CLI
         if: always()
         run: |
+          sudo apt-get install -y default-jre
           wget -q -O /tmp/allure.tgz https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz
           sudo tar -zxvf /tmp/allure.tgz -C /opt/
-          sudo ln -sf /opt/allure-2.24.0/bin/allure /usr/bin/allure || true
-          allure --version || true
+          sudo ln -sf /opt/allure-2.24.0/bin/allure /usr/bin/allure
+          allure --version || echo "Allure version check completed"
 
       - name: Generate Allure report
         if: always()
@@ -171,10 +162,8 @@ XML
           else
             echo "No Allure results found - creating sample report"
             mkdir -p allure-report
-            cat > allure-report/index.html <<'HTML'
-<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Allure Report</title></head><body><h1>Allure Report</h1><p>No results.</p></body></html>
-HTML
+            echo '<!DOCTYPE html>' > allure-report/index.html
+            echo '<html><head><meta charset="utf-8"><title>Allure Report</title></head><body><h1>Allure Report</h1><p>No results.</p></body></html>' >> allure-report/index.html
           fi
 
       - name: Upload Allure report
