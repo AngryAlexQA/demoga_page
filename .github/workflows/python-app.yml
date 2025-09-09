@@ -60,7 +60,7 @@ jobs:
       - name: Create default pytest.ini if not exists
         run: |
           if [ ! -f pytest.ini ]; then
-            cat > pytest.ini << 'EOL'
+            cat > pytest.ini << 'EOF'
 [pytest]
 testpaths = tests
 python_files = test_*.py
@@ -69,7 +69,7 @@ python_functions = test_*
 addopts = -v --tb=short --reruns 1 --reruns-delay 2
 junit_family = xunit2
 junit_suite_name = UI Tests
-EOL
+EOF
             echo "Created default pytest.ini"
           fi
 
