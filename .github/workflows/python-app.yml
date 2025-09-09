@@ -53,11 +53,11 @@ jobs:
 
       - name: Install ChromeDriver via webdriver-manager
         run: |
-         python - <<'PY'
-         from webdriver_manager.chrome import ChromeDriverManager
-         print("Installing Chromedriver...")
-         ChromeDriverManager().install()
-         PY
+          python - <<'PY'
+          from webdriver_manager.chrome import ChromeDriverManager
+          print("Installing Chromedriver...")
+          ChromeDriverManager().install()
+          PY
 
       - name: Create default pytest.ini if not exists
         run: |
@@ -103,7 +103,6 @@ EOF
           sleep 2
 
           echo "Running pytest..."
-          # If tests directory exists and contains tests, run pytest; otherwise create demo tests and run them
           if [ -d "tests" ] && [ "$(find tests -name 'test_*.py' | head -1)" ]; then
             pytest -v || true
           else
