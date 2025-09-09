@@ -81,7 +81,7 @@ jobs:
           PYTHONUNBUFFERED: "1"
         run: |
           export CHROME_BIN=/usr/bin/google-chrome
-          export DISPLAY=:99
+          export DISPLAY:99
           Xvfb :99 -screen 0 1920x1080x24 &
           echo "Running tests in headless mode"
           
@@ -101,7 +101,7 @@ jobs:
             echo 'class TestExample:' >> tests/test_example.py
             echo '    def test_class_example(self):' >> tests/test_example.py
             echo '        """Example class test that always passes"""' >> tests/test_example.py
-            echo '        assert True' >> tests/test_example.py
+            echo '    assert True' >> tests/test_example.py
             pytest -v --junitxml=junit-results.xml tests/test_example.py || true
           fi
 
@@ -112,32 +112,30 @@ jobs:
             echo "Converting JUnit results to Allure format"
             # Создаем простой Allure результат на основе JUnit
             mkdir -p allure-results
-            cat > allure-results/junit-converter-result.json << 'EOL'
-{
-  "name": "UI Tests",
-  "status": "passed",
-  "start": 1694265600000,
-  "stop": 1694265601000,
-  "steps": [
-    {
-      "name": "JUnit test execution",
-      "status": "passed",
-      "start": 1694265600000,
-      "stop": 1694265601000
-    }
-  ],
-  "labels": [
-    {
-      "name": "framework",
-      "value": "pytest"
-    },
-    {
-      "name": "language",
-      "value": "python"
-    }
-  ]
-}
-EOL
+            echo '{' > allure-results/junit-converter-result.json
+            echo '  "name": "UI Tests",' >> allure-results/junit-converter-result.json
+            echo '  "status": "passed",' >> allure-results/junit-converter-result.json
+            echo '  "start": 1694265600000,' >> allure-results/junit-converter-result.json
+            echo '  "stop": 1694265601000,' >> allure-results/junit-converter-result.json
+            echo '  "steps": [' >> allure-results/junit-converter-result.json
+            echo '    {' >> allure-results/junit-converter-result.json
+            echo '      "name": "JUnit test execution",' >> allure-results/junit-converter-result.json
+            echo '      "status": "passed",' >> allure-results/junit-converter-result.json
+            echo '      "start": 1694265600000,' >> allure-results/junit-converter-result.json
+            echo '      "stop": 1694265601000' >> allure-results/junit-converter-result.json
+            echo '    }' >> allure-results/junit-converter-result.json
+            echo '  ],' >> allure-results/junit-converter-result.json
+            echo '  "labels": [' >> allure-results/junit-converter-result.json
+            echo '    {' >> allure-results/junit-converter-result.json
+            echo '      "name": "framework",' >> allure-results/junit-converter-result.json
+            echo '      "value": "pytest"' >> allure-results/junit-converter-result.json
+            echo '    },' >> allure-results/junit-converter-result.json
+            echo '    {' >> allure-results/junit-converter-result.json
+            echo '      "name": "language",' >> allure-results/junit-converter-result.json
+            echo '      "value": "python"' >> allure-results/junit-converter-result.json
+            echo '    }' >> allure-results/junit-converter-result.json
+            echo '  ]' >> allure-results/junit-converter-result.json
+            echo '}' >> allure-results/junit-converter-result.json
             echo "Allure results generated from JUnit"
           else
             echo "No JUnit results found for conversion"
@@ -177,27 +175,25 @@ EOL
           else
             echo "No Allure results found - creating sample report"
             mkdir -p allure-report
-            cat > allure-report/index.html << 'EOL'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Allure Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        h1 { color: #333; }
-        .summary { background: #f5f5f5; padding: 20px; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <h1>Allure Test Report</h1>
-    <div class="summary">
-        <h2>Test Execution Summary</h2>
-        <p>Tests were executed using pytest framework</p>
-        <p>View JUnit results for detailed test information</p>
-    </div>
-</body>
-</html>
-EOL
+            echo '<!DOCTYPE html>' > allure-report/index.html
+            echo '<html>' >> allure-report/index.html
+            echo '<head>' >> allure-report/index.html
+            echo '    <title>Allure Report</title>' >> allure-report/index.html
+            echo '    <style>' >> allure-report/index.html
+            echo '        body { font-family: Arial, sans-serif; margin: 40px; }' >> allure-report/index.html
+            echo '        h1 { color: #333; }' >> allure-report/index.html
+            echo '        .summary { background: #f5f5f5; padding: 20px; border-radius: 5px; }' >> allure-report/index.html
+            echo '    </style>' >> allure-report/index.html
+            echo '</head>' >> allure-report/index.html
+            echo '<body>' >> allure-report/index.html
+            echo '    <h1>Allure Test Report</h1>' >> allure-report/index.html
+            echo '    <div class="summary">' >> allure-report/index.html
+            echo '        <h2>Test Execution Summary</h2>' >> allure-report/index.html
+            echo '        <p>Tests were executed using pytest framework</p>' >> allure-report/index.html
+            echo '        <p>View JUnit results for detailed test information</p>' >> allure-report/index.html
+            echo '    </div>' >> allure-report/index.html
+            echo '</body>' >> allure-report/index.html
+            echo '</html>' >> allure-report/index.html
           fi
 
       - name: Upload Allure report
@@ -227,6 +223,7 @@ EOL
             echo "No test results found"
             exit 1
           fi
+          
       - name: Publish test results
         if: always() && github.event_name != 'pull_request'
         uses: EnricoMi/publish-unit-test-result-action@v2
