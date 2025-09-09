@@ -33,11 +33,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+            pip install "namedlist==1.7.1" "allure-pytest==2.10.2" "allure-python-commons==2.10.2"
           if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
+          pip install -r requirements.txt
           else
-            echo "requirements.txt not found, installing basic packages"
-            pip install pytest selenium webdriver-manager pytest-rerunfailures
+          echo "requirements.txt not found, installing basic packages"
+          pip install pytest selenium webdriver-manager pytest-rerunfailures
           fi
 
       - name: Install system dependencies
