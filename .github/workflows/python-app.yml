@@ -33,130 +33,112 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "requirements.txt not found, installing basic packages"
+            pip install pytest selenium webdriver-manager allure-pytest
+          fi
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip xvfb libxi6 libgconf-2-4 default-jre
 
       - name: Install Google Chrome
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip xvfb libxi6 libgconf-2-4
           wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt-get install -y /tmp/chrome.deb || sudo apt --fix-broken install -y
+          sudo apt-get install -y /tmp/chrome.deb
+          sudo apt --fix-broken install -y
           google-chrome --version
 
-      - name: Install ChromeDriver matching Chrome
+      - name: Install ChromeDriver
         run: |
-          CHROME_VERSION=$(google-chrome --product-version | cut -d. -f1)
-          echo "Chrome major version: $CHROME_VERSION"
-          LATEST_CHROMEDRIVER_JSON=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
-          echo "Chromedriver version to download: $LATEST_CHROMEDRIVER_JSON"
-          wget -q -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${LATEST_CHROMEDRIVER_JSON}/chromedriver_linux64.zip"
-          unzip -qq /tmp/chromedriver.zip -d /tmp
-          sudo mv /tmp/chromedriver /usr/local/bin/chromedriver
-          sudo chmod +x /usr/local/bin/chromedriver
-          chromedriver --version
+          # Устанавливаем последнюю версию ChromeDriver через webdriver-manager
+          pip install webdriver-manager
+          python -c "from webdriver_manager.chrome import ChromeDriverManager; ChromeDriverManager().install()"
 
-      - name: Generate pytest.ini from YAML (if config exists)
-        working-directory: ${{ github.workspace }}
+      - name: Create default pytest.ini if not exists
         run: |
-          if [ -f config/pytest_config.yaml ]; then
-            python - <<'PY'
-import yaml
-from pathlib import Path
-cfg_path = Path("config/pytest_config.yaml")
-y = yaml.safe_load(cfg_path.read_text())
-pytest_cfg = y.get("pytest", {})
-lines = ["[pytest]\n"]
-for key in ("testpaths", "python_files", "python_classes", "python_functions",
-            "junit_family", "junit_suite_name", "junit_logging"):
-    if key in pytest_cfg and pytest_cfg[key] is not None:
-        lines.append(f"{key} = {pytest_cfg[key]}\n")
-if "addopts" in pytest_cfg:
-    lines.append("addopts =\n")
-    for opt in pytest_cfg["addopts"]:
-        lines.append(f"    {opt}\n")
-if "alluredir" in pytest_cfg:
-    lines.append(f"--alluredir={pytest_cfg['alluredir']}\n")
-if "reruns" in pytest_cfg:
-    lines.append(f"reruns = {pytest_cfg['reruns']}\n")
-if "reruns_delay" in pytest_cfg:
-    lines.append(f"reruns_delay = {pytest_cfg['reruns_delay']}\n")
-if "markers" in pytest_cfg:
-    lines.append("\nmarkers =\n")
-    for m in pytest_cfg["markers"]:
-        name = m.get("name")
-        desc = m.get("description","")
-        lines.append(f"    {name}: {desc}\n")
-if "filterwarnings" in pytest_cfg:
-    lines.append("\nfilterwarnings =\n")
-    for fw in pytest_cfg["filterwarnings"]:
-        lines.append(f"    {fw}\n")
-Path("pytest.ini").write_text(''.join(lines))
-print('pytest.ini generated')
-PY
-          else
-            echo "No config/pytest_config.yaml found — skipping pytest.ini generation."
-      
+          if [ ! -f pytest.ini ]; then
+            cat > pytest.ini << 'EOL'
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = -v --tb=short --reruns 1 --reruns-delay 2
+junit_family = xunit2
+junit_suite_name = UI Tests
+EOL
+            echo "Created default pytest.ini"
+          fi
+
       - name: Prepare reports directories
         run: |
-          mkdir -p reports/allure-results
-          mkdir -p reports/allure-report || true
+          mkdir -p allure-results
+          mkdir -p allure-report
 
-      - name: Start Xvfb (for non-headless tests, optional)
-        if: ${{ env.USE_XVFB == 'true' }}
-        run: |
-          sudo apt-get install -y xvfb
-          Xvfb :99 -screen 0 1920x1080x24 &>/dev/null &
-          export DISPLAY=:99
-
-      - name: Run UI tests with pytest (Chrome headless)
-        continue-on-error: true
+      - name: Run UI tests with pytest
         env:
-          BROWSER: chrome
           HEADLESS: "true"
-          PYTHONUNBUFFERED: 1
+          PYTHONUNBUFFERED: "1"
         run: |
-          # Ensure chromedriver is on PATH
-          export PATH="/usr/local/bin:$PATH"
-          # Example: you can override browser via env var in your fixtures
-          echo "Running tests with BROWSER=$BROWSER HEADLESS=$HEADLESS"
-          pytest -v --junitxml=test-results.xml
+          # Устанавливаем переменные окружения для Chrome
+          export CHROME_BIN=/usr/bin/google-chrome
+          export CHROMEDRIVER_BIN=/usr/local/bin/chromedriver
+          
+          echo "Running tests in headless mode"
+          pytest -v \
+            --junitxml=junit-results.xml \
+            --alluredir=allure-results \
+            --reruns=1 \
+            --reruns-delay=2
 
-      - name: Upload JUnit test-results.xml
+      - name: Upload JUnit test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: junit-test-results
-          path: test-results.xml
-
-      - name: Publish test results (JUnit)
-        if: always()
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: test-results.xml
+          name: junit-results
+          path: junit-results.xml
 
       - name: Upload Allure results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
-          path: reports/allure-results
+          path: allure-results
 
-      - name: Generate Allure report (optional)
-        if: steps.upload-allure-results.outcome != 'failure'
+      - name: Install Allure CLI
+        if: always()
         run: |
-          # attempt to generate Allure report if results exist
-          if [ -d reports/allure-results ] && [ "$(ls -A reports/allure-results)" ]; then
-            wget -q -O /tmp/allure.tgz https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
-            mkdir -p /tmp/allure && tar -xzf /tmp/allure.tgz -C /tmp/allure --strip-components=1
-            /tmp/allure/bin/allure generate reports/allure-results -o reports/allure-report || true
-            echo "Allure report generated at reports/allure-report"
+          # Устанавливаем Allure CLI
+          sudo apt-get install -y default-jre
+          wget -q -O allure-2.21.0.tgz https://github.com/allure-framework/allure2/releases/download/2.21.0/allure-2.21.0.tgz
+          sudo tar -zxvf allure-2.21.0.tgz -C /opt/
+          sudo ln -s /opt/allure-2.21.0/bin/allure /usr/bin/allure
+          allure --version
+
+      - name: Generate Allure report
+        if: always()
+        run: |
+          if [ -d allure-results ] && [ "$(ls -A allure-results)" ]; then
+            allure generate allure-results -o allure-report --clean
+            echo "Allure report generated"
           else
-            echo "No allure results to generate report from."
+            echo "No Allure results found"
           fi
 
-      - name: Upload Allure report artifact
+      - name: Upload Allure report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
-          path: reports/allure-report
+          path: allure-report
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: junit-results.xml
+        
