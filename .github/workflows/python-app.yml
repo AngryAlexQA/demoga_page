@@ -99,18 +99,16 @@ jobs:
             echo "No test files found in tests directory"
             # Создаем минимальный тест для демонстрации
             mkdir -p tests
-            cat > tests/test_example.py << 'EOL'
-import pytest
-
-def test_example():
-    """Example test that always passes"""
-    assert True
-
-class TestExample:
-    def test_class_example(self):
-        """Example class test that always passes"""
-        assert True
-EOL
+            echo 'import pytest' > tests/test_example.py
+            echo '' >> tests/test_example.py
+            echo 'def test_example():' >> tests/test_example.py
+            echo '    """Example test that always passes"""' >> tests/test_example.py
+            echo '    assert True' >> tests/test_example.py
+            echo '' >> tests/test_example.py
+            echo 'class TestExample:' >> tests/test_example.py
+            echo '    def test_class_example(self):' >> tests/test_example.py
+            echo '        """Example class test that always passes"""' >> tests/test_example.py
+            echo '        assert True' >> tests/test_example.py
             pytest -v --junitxml=junit-results.xml --alluredir=allure-results tests/test_example.py || true
           fi
 
