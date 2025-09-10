@@ -1,18 +1,32 @@
 import pytest
 import logging
+import atexit
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("test_execution.log"),
-        logging.StreamHandler()
-    ]
-)
+# Настройка логирования — добавляем handlers только если их нет
 logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logger.setLevel(logging.INFO)
+    fh = logging.FileHandler("test_execution.log")
+    sh = logging.StreamHandler()
+    fmt = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    fh.setFormatter(fmt)
+    sh.setFormatter(fmt)
+    logger.addHandler(fh)
+    logger.addHandler(sh)
+
+# Опционально: гарантировать закрытие файлового обработчика при завершении процесса
+def _close_file_handlers():
+    for h in list(logger.handlers):
+        try:
+            if isinstance(h, logging.FileHandler):
+                h.flush()
+                h.close()
+        except Exception:
+            pass
+
+atexit.register(_close_file_handlers)
 
 
 @pytest.fixture(scope="function")
@@ -24,40 +38,59 @@ def driver():
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--headless=new")  # включить headless, при необходимости убрать
+    options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
 
     driver = webdriver.Chrome(options=options)
     try:
         driver.maximize_window()
     except Exception:
-        # в headless/CI maximize может не работать
         logger.debug("maximize_window() пропущен")
 
-    # Устанавливаем таймауты для медленных соединений
     driver.implicitly_wait(10)
     driver.set_page_load_timeout(30)
 
     yield driver
 
-    logger.info("Завершение работы WebDriver")
+    # Защищённое логирование в teardown — избегаем записи в уже закрытые потоки
+    try:
+        # проверяем, есть ли открытые потоковые handlers
+        has_open = False
+        for h in logger.handlers:
+            stream = getattr(h, "stream", None)
+            if stream is None:
+                has_open = True
+                break
+            try:
+                if not stream.closed:
+                    has_open = True
+                    break
+            except Exception:
+                has_open = True
+                break
+        if has_open:
+            logger.info("Завершение работы WebDriver")
+    except Exception:
+        # ничего не делаем, чтобы teardown не падал
+        pass
+
     try:
         driver.quit()
     except Exception as e:
-        logger.warning(f"Ошибка при закрытии драйвера: {e}")
+        try:
+            logger.warning(f"Ошибка при закрытии драйвера: {e}")
+        except Exception:
+            pass
 
 
-# Защитный хук: приводим longrepr к строке, чтобы плагины отчетности
-# не пытались рекурсивно сериализовать объекты с методами типа iter_parents
+# Защитный хук pytest_runtest_makereport
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
 
-    # Сохраняем исходный текст отчёта для логирования
     try:
         if rep.when == "call" and rep.failed:
-            # Если longrepr не строка, приводим к строковому представлению
             if hasattr(rep, "longrepr") and not isinstance(rep.longrepr, str):
                 try:
                     rep.longrepr = str(rep.longrepr)
@@ -67,7 +100,9 @@ def pytest_runtest_makereport(item, call):
         elif rep.when == "call" and rep.passed:
             logger.info(f"Тест {item.name} успешно пройден")
     except Exception as e:
-        logger.exception(f"Ошибка в кастомном pytest_runtest_makereport: {e}")
+        try:
+            logger.exception(f"Ошибка в кастомном pytest_runtest_makereport: {e}")
+        except Exception:
+            pass
 
-    # Возвращаем результат как обычно
     yield rep
