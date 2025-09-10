@@ -96,13 +96,20 @@ def pytest_runtest_makereport(item, call):
                     rep.longrepr = str(rep.longrepr)
                 except Exception:
                     rep.longrepr = "longrepr conversion failed"
-            logger.error(f"Тест {item.name} упал с ошибкой: {getattr(rep, 'longrepr', repr(rep))}")
+            try:
+                logger.error(f"Тест {item.name} упал с ошибкой: {getattr(rep, 'longrepr', repr(rep))}")
+            except Exception:
+                pass
         elif rep.when == "call" and rep.passed:
-            logger.info(f"Тест {item.name} успешно пройден")
+            try:
+                logger.info(f"Тест {item.name} успешно пройден")
+            except Exception:
+                pass
     except Exception as e:
         try:
             logger.exception(f"Ошибка в кастомном pytest_runtest_makereport: {e}")
         except Exception:
             pass
+
 
     yield rep
