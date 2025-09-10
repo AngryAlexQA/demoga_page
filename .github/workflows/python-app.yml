@@ -9,6 +9,9 @@ on:
 jobs:
   ui-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     defaults:
       run:
         shell: bash
@@ -197,3 +200,4 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: junit-results.xml
+          github_token: ${{ secrets.ALLURE_REPORT_TOKEN }}
