@@ -3,6 +3,9 @@ import logging
 import atexit
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
+import shutil
+import os
 
 # Настройка логирования — добавляем handlers только если их нет
 logger = logging.getLogger(__name__)
@@ -16,18 +19,34 @@ if not logger.handlers:
     logger.addHandler(fh)
     logger.addHandler(sh)
 
-# Опционально: гарантировать закрытие файлового обработчика при завершении процесса
+# Гарантированно закрываем файловые обработчики при завершении процесса
 def _close_file_handlers():
     for h in list(logger.handlers):
         try:
             if isinstance(h, logging.FileHandler):
-                h.flush()
-                h.close()
+                try:
+                    h.flush()
+                except Exception:
+                    pass
+                try:
+                    h.close()
+                except Exception:
+                    pass
         except Exception:
             pass
 
 atexit.register(_close_file_handlers)
 
+def _get_chrome_driver_path():
+    # Попытка найти chromedriver автоматически (если он в PATH)
+    path = shutil.which("chromedriver")
+    if path:
+        return path
+    # Можно задать путь через переменную окружения CHROMEDRIVER_PATH
+    env_path = os.environ.get("CHROMEDRIVER_PATH")
+    if env_path:
+        return env_path
+    return None
 
 @pytest.fixture(scope="function")
 def driver():
@@ -38,10 +57,18 @@ def driver():
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    # В новых версиях Chrome правильнее использовать --headless=new, но если возникают проблемы — заменить на --headless
     options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
 
-    driver = webdriver.Chrome(options=options)
+    chrome_path = _get_chrome_driver_path()
+    if chrome_path:
+        service = ChromeService(executable_path=chrome_path)
+        driver = webdriver.Chrome(service=service, options=options)
+    else:
+        # Если chromedriver не найден — доверяем webdriver менеджеру/браузеру в PATH
+        driver = webdriver.Chrome(options=options)
+
     try:
         driver.maximize_window()
     except Exception:
@@ -52,36 +79,32 @@ def driver():
 
     yield driver
 
-    # Защищённое логирование в teardown — избегаем записи в уже закрытые потоки
+    # Teardown — сначала корректно закрываем драйвер, затем безопасно логируем
     try:
-        # проверяем, есть ли открытые потоковые handlers
-        has_open = False
-        for h in logger.handlers:
-            stream = getattr(h, "stream", None)
-            if stream is None:
-                has_open = True
-                break
+        try:
+            driver.quit()
+        except Exception as e:
             try:
-                if not stream.closed:
+                logger.warning(f"Ошибка при закрытии драйвера: {e}")
+            except Exception:
+                pass
+    finally:
+        # Пытаемся логировать только если есть открытые handlers
+        try:
+            has_open = False
+            for h in logger.handlers:
+                stream = getattr(h, "stream", None)
+                try:
+                    if stream is None or not getattr(stream, "closed", False):
+                        has_open = True
+                        break
+                except Exception:
                     has_open = True
                     break
-            except Exception:
-                has_open = True
-                break
-        if has_open:
-            logger.info("Завершение работы WebDriver")
-    except Exception:
-        # ничего не делаем, чтобы teardown не падал
-        pass
-
-    try:
-        driver.quit()
-    except Exception as e:
-        try:
-            logger.warning(f"Ошибка при закрытии драйвера: {e}")
+            if has_open:
+                logger.info("Завершение работы WebDriver")
         except Exception:
             pass
-
 
 # Защитный хук pytest_runtest_makereport
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -111,5 +134,4 @@ def pytest_runtest_makereport(item, call):
         except Exception:
             pass
 
-
-    yield rep
+    return rep
