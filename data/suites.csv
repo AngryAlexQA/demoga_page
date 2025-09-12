@@ -1,0 +1,7 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Fri Sep 12 08:06:46 UTC 2025","Fri Sep 12 08:06:49 UTC 2025","3690","tests","test_check_text","","","","test_check_footer_text","
+    Тест проверки текста в подвале.
+    "
+"broken","Fri Sep 12 08:27:06 UTC 2025","Fri Sep 12 08:39:09 UTC 2025","722998","tests","test_check_text","","","","test_check_center_text_after_navigation","
+    Тест проверки текста после перехода на страницу Elements.
+    "
