@@ -12,10 +12,7 @@ jobs:
     permissions:
       contents: read
       checks: write
-    defaults:
-      run:
-        shell: bash
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -200,7 +197,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: junit-results.xml
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          #github_token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -209,4 +206,4 @@ jobs:
            publish_dir: ./allure-report
            user_name: 'github-actions[bot]'
            user_email: 'github-actions[bot]@users.noreply.github.com'
-           commit_message: ${{ github.event.head_commit.message }}
+          # commit_message: ${{ github.event.head_commit.message }}
