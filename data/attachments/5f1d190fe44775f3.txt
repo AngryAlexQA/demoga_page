@@ -1,2 +1,0 @@
-INFO     conftest:conftest.py:53 Инициализация WebDriver
-INFO     conftest:conftest.py:105 Завершение работы WebDriver

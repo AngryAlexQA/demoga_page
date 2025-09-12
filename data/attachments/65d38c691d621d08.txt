@@ -1,0 +1,4 @@
+INFO     conftest:conftest.py:144 === Начало теста: test_check_footer_text ===
+INFO     conftest:conftest.py:49 Инициализация WebDriver
+INFO     conftest:conftest.py:107 Драйвер успешно закрыт
+INFO     conftest:conftest.py:146 === Конец теста: test_check_footer_text ===

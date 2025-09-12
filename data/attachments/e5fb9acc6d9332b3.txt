@@ -1,0 +1,4 @@
+INFO     conftest:conftest.py:144 === Начало теста: test_check_center_text_after_navigation ===
+INFO     conftest:conftest.py:49 Инициализация WebDriver
+INFO     conftest:conftest.py:107 Драйвер успешно закрыт
+INFO     conftest:conftest.py:146 === Конец теста: test_check_center_text_after_navigation ===

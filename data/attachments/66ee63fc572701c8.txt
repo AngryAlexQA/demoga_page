@@ -1,3 +1,0 @@
-2025-09-12 10:30:03,908 - conftest - INFO - Инициализация WebDriver
-2025-09-12 10:30:11,255 - conftest - INFO - Тест test_check_center_text_after_navigation успешно пройден
-2025-09-12 10:30:11,371 - conftest - INFO - Завершение работы WebDriver

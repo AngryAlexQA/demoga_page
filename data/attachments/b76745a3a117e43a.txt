@@ -1,0 +1,4 @@
+2025-09-12 10:39:01,776 - conftest - INFO - === Начало теста: test_check_footer_text ===
+2025-09-12 10:39:01,776 - conftest - INFO - Инициализация WebDriver
+2025-09-12 10:39:09,044 - conftest - INFO - Драйвер успешно закрыт
+2025-09-12 10:39:09,045 - conftest - INFO - === Конец теста: test_check_footer_text ===
