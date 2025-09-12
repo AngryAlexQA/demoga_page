@@ -6,8 +6,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 import shutil
 import os
+import allure
+from allure_commons.types import AttachmentType
+import socket
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Настройка логирования — добавляем handlers только если их нет
+# Настройка логирования
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     logger.setLevel(logging.INFO)
@@ -19,119 +24,123 @@ if not logger.handlers:
     logger.addHandler(fh)
     logger.addHandler(sh)
 
-# Гарантированно закрываем файловые обработчики при завершении процесса
 def _close_file_handlers():
     for h in list(logger.handlers):
         try:
             if isinstance(h, logging.FileHandler):
-                try:
-                    h.flush()
-                except Exception:
-                    pass
-                try:
-                    h.close()
-                except Exception:
-                    pass
+                h.flush()
+                h.close()
         except Exception:
             pass
 
 atexit.register(_close_file_handlers)
 
 def _get_chrome_driver_path():
-    # Попытка найти chromedriver автоматически (если он в PATH)
     path = shutil.which("chromedriver")
     if path:
         return path
-    # Можно задать путь через переменную окружения CHROMEDRIVER_PATH
     env_path = os.environ.get("CHROMEDRIVER_PATH")
     if env_path:
         return env_path
     return None
 
 @pytest.fixture(scope="function")
-def driver():
+def driver(request):
     logger.info("Инициализация WebDriver")
+    
+    # Настройка Chrome options
     options = Options()
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    # В новых версиях Chrome правильнее использовать --headless=new, но если возникают проблемы — заменить на --headless
     options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-software-rasterizer")
+    
+    # Увеличиваем таймауты
+    options.add_experimental_option("prefs", {
+        "profile.default_content_setting_values.notifications": 2,
+        "credentials_enable_service": False,
+        "profile.password_manager_enabled": False
+    })
 
     chrome_path = _get_chrome_driver_path()
-    if chrome_path:
-        service = ChromeService(executable_path=chrome_path)
-        driver = webdriver.Chrome(service=service, options=options)
-    else:
-        # Если chromedriver не найден — доверяем webdriver менеджеру/браузеру в PATH
-        driver = webdriver.Chrome(options=options)
-
+    driver_instance = None
+    
     try:
-        driver.maximize_window()
-    except Exception:
-        logger.debug("maximize_window() пропущен")
-
-    driver.implicitly_wait(10)
-    driver.set_page_load_timeout(30)
-
-    yield driver
-
-    # Teardown — сначала корректно закрываем драйвер, затем безопасно логируем
-    try:
+        if chrome_path:
+            service = ChromeService(
+                executable_path=chrome_path,
+                service_args=['--verbose'],
+                log_path="chromedriver.log"
+            )
+            driver_instance = webdriver.Chrome(service=service, options=options)
+        else:
+            driver_instance = webdriver.Chrome(options=options)
+        
+        # Увеличиваем таймауты
+        driver_instance.implicitly_wait(15)
+        driver_instance.set_page_load_timeout(45)
+        driver_instance.set_script_timeout(30)
+        
+        # Максимизируем окно
         try:
-            driver.quit()
-        except Exception as e:
-            try:
-                logger.warning(f"Ошибка при закрытии драйвера: {e}")
-            except Exception:
-                pass
-    finally:
-        # Пытаемся логировать только если есть открытые handlers
-        try:
-            has_open = False
-            for h in logger.handlers:
-                stream = getattr(h, "stream", None)
-                try:
-                    if stream is None or not getattr(stream, "closed", False):
-                        has_open = True
-                        break
-                except Exception:
-                    has_open = True
-                    break
-            if has_open:
-                logger.info("Завершение работы WebDriver")
+            driver_instance.maximize_window()
         except Exception:
-            pass
+            logger.debug("maximize_window() пропущен")
+        
+        yield driver_instance
+        
+    except Exception as e:
+        logger.error(f"Ошибка инициализации драйвера: {e}")
+        pytest.fail(f"Не удалось инициализировать WebDriver: {e}")
+    
+    finally:
+        # Teardown
+        if driver_instance:
+            try:
+                driver_instance.quit()
+                logger.info("Драйвер успешно закрыт")
+            except Exception as e:
+                logger.warning(f"Ошибка при закрытии драйвера: {e}")
 
-# Защитный хук pytest_runtest_makereport
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
-
-    try:
-        if rep.when == "call" and rep.failed:
-            if hasattr(rep, "longrepr") and not isinstance(rep.longrepr, str):
-                try:
-                    rep.longrepr = str(rep.longrepr)
-                except Exception:
-                    rep.longrepr = "longrepr conversion failed"
-            try:
-                logger.error(f"Тест {item.name} упал с ошибкой: {getattr(rep, 'longrepr', repr(rep))}")
-            except Exception:
-                pass
-        elif rep.when == "call" and rep.passed:
-            try:
-                logger.info(f"Тест {item.name} успешно пройден")
-            except Exception:
-                pass
-    except Exception as e:
+    
+    if rep.when == "call" and rep.failed:
         try:
-            logger.exception(f"Ошибка в кастомном pytest_runtest_makereport: {e}")
-        except Exception:
-            pass
+            driver = item.funcargs.get('driver')
+            if driver:
+                # Создаем скриншот для упавших тестов
+                screenshot = driver.get_screenshot_as_png()
+                allure.attach(
+                    screenshot,
+                    name="screenshot_on_failure",
+                    attachment_type=AttachmentType.PNG
+                )
+                
+                # Логируем текущий URL
+                try:
+                    current_url = driver.current_url
+                    allure.attach(
+                        f"Current URL: {current_url}",
+                        name="current_url",
+                        attachment_type=AttachmentType.TEXT
+                    )
+                except Exception:
+                    pass
+                    
+        except Exception as e:
+            logger.error(f"Ошибка при создании отчета: {e}")
 
-    return rep
+@pytest.fixture(autouse=True)
+def log_test_name(request):
+    logger.info(f"=== Начало теста: {request.node.name} ===")
+    yield
+    logger.info(f"=== Конец теста: {request.node.name} ===")
