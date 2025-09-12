@@ -1,5 +1,5 @@
-2025-09-12 08:06:49,976 - conftest - INFO - Инициализация WebDriver
-2025-09-12 08:18:53,500 - conftest - ERROR - Тест test_check_center_text_after_navigation упал с ошибкой: /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+2025-09-12 08:58:01,236 - conftest - INFO - Инициализация WebDriver
+2025-09-12 09:10:04,881 - conftest - ERROR - Тест test_check_center_text_after_navigation упал с ошибкой: /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connection.py:565: in getresponse
@@ -60,7 +60,7 @@ pages/demoqa_page.py:110: in click_elements_button
     self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
     raise ReadTimeoutError(
-E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=48727): Read timed out. (read timeout=120)
+E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=60007): Read timed out. (read timeout=120)
 
 During handling of the above exception, another exception occurred:
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
@@ -119,7 +119,7 @@ pages/demoqa_page.py:123: in click_elements_button
     self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
     raise ReadTimeoutError(
-E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=48727): Read timed out. (read timeout=120)
+E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=60007): Read timed out. (read timeout=120)
 
 During handling of the above exception, another exception occurred:
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
@@ -148,7 +148,7 @@ The above exception was the direct cause of the following exception:
     self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
     raise ReadTimeoutError(
-E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=48727): Read timed out. (read timeout=120)
+E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=60007): Read timed out. (read timeout=120)
 
 The above exception was the direct cause of the following exception:
 tests/test_check_text.py:85: in test_check_center_text_after_navigation
@@ -185,10 +185,10 @@ tests/test_check_text.py:85: in test_check_center_text_after_navigation
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/util/retry.py:519: in increment
     raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=48727): Max retries exceeded with url: /session/1d176248842fd57659669f84f245a503/url (Caused by ReadTimeoutError("HTTPConnectionPool(host='localhost', port=48727): Read timed out. (read timeout=120)"))
-2025-09-12 08:27:03,814 - conftest - INFO - Завершение работы WebDriver
-2025-09-12 08:27:05,817 - conftest - INFO - Инициализация WebDriver
-2025-09-12 08:39:09,293 - conftest - ERROR - Тест test_check_center_text_after_navigation упал с ошибкой: /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=60007): Max retries exceeded with url: /session/73f874d1a897bfd66a0cc5c7815c34fd/url (Caused by ReadTimeoutError("HTTPConnectionPool(host='localhost', port=60007): Read timed out. (read timeout=120)"))
+2025-09-12 09:18:15,165 - conftest - INFO - Завершение работы WebDriver
+2025-09-12 09:18:17,168 - conftest - INFO - Инициализация WebDriver
+2025-09-12 09:30:22,498 - conftest - ERROR - Тест test_check_center_text_after_navigation упал с ошибкой: /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connection.py:565: in getresponse
@@ -249,7 +249,7 @@ pages/demoqa_page.py:110: in click_elements_button
     self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
     raise ReadTimeoutError(
-E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=59449): Read timed out. (read timeout=120)
+E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=55893): Read timed out. (read timeout=120)
 
 During handling of the above exception, another exception occurred:
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
@@ -308,7 +308,7 @@ pages/demoqa_page.py:123: in click_elements_button
     self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
     raise ReadTimeoutError(
-E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=59449): Read timed out. (read timeout=120)
+E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=55893): Read timed out. (read timeout=120)
 
 During handling of the above exception, another exception occurred:
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
@@ -337,7 +337,7 @@ The above exception was the direct cause of the following exception:
     self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
     raise ReadTimeoutError(
-E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=59449): Read timed out. (read timeout=120)
+E   urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='localhost', port=55893): Read timed out. (read timeout=120)
 
 The above exception was the direct cause of the following exception:
 tests/test_check_text.py:85: in test_check_center_text_after_navigation
@@ -374,5 +374,5 @@ tests/test_check_text.py:85: in test_check_center_text_after_navigation
 /opt/hostedtoolcache/Python/3.11.13/x64/lib/python3.11/site-packages/urllib3/util/retry.py:519: in increment
     raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=59449): Max retries exceeded with url: /session/8e51195aa1b18083d4a2013ebc4ab156/url (Caused by ReadTimeoutError("HTTPConnectionPool(host='localhost', port=59449): Read timed out. (read timeout=120)"))
-2025-09-12 08:47:19,626 - conftest - INFO - Завершение работы WebDriver
+E   urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='localhost', port=55893): Max retries exceeded with url: /session/b83ce6342d35f1377d28f617eedfd89c/url (Caused by ReadTimeoutError("HTTPConnectionPool(host='localhost', port=55893): Read timed out. (read timeout=120)"))
+2025-09-12 09:38:32,743 - conftest - INFO - Завершение работы WebDriver
