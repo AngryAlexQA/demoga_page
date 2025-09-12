@@ -201,4 +201,12 @@ jobs:
         with:
           files: junit-results.xml
           github_token: ${{ secrets.ALLURE_REPORT_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+         with:
+           github_token: ${{ secrets.ALLURE_REPORT_TOKEN }}
+           publish_dir: ./allure-report
+           user_name: 'github-actions[bot]'
+           user_email: 'github-actions[bot]@users.noreply.github.com'
+         commit_message: ${{ github.event.head_commit.message }}
