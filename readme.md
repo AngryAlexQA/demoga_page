@@ -4,16 +4,24 @@
 
 Проект для автоматизации тестирования демо-сайта demoqa.com.
 
-# Запуск всех тестов
+### Запуск всех тестов
+```
 pytest tests/test_check_text.py -v --alluredir=allure-results
+```
 
-# Запуск конкретного теста
+### Запуск конкретного теста
+```
 pytest tests/test_check_text.py::test_check_footer_text -v --alluredir=allure-results
 pytest tests/test_check_text.py::test_check_center_text_after_navigation -v --alluredir=allure-results
+```
 
-# Запуск с повторными попытками для упавших тестов
+### Запуск с повторными попытками для упавших тестов
+```
 pytest tests/test_check_text.py -v --alluredir=allure-results --reruns 2 --reruns-delay 1
+```
 
-# Просмотр отчета
+### Просмотр отчета
+```
 allure serve allure-results
+```
 
