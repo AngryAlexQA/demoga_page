@@ -1,0 +1,3 @@
+INFO     conftest:conftest.py:53 Инициализация WebDriver
+WARNING  pages.demoqa_page:demoqa_page.py:117 Таймаут при клике на Elements, используем прямой переход
+INFO     conftest:conftest.py:105 Завершение работы WebDriver

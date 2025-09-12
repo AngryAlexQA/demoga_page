@@ -1,7 +1,7 @@
 "Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
-"passed","Fri Sep 12 08:57:57 UTC 2025","Fri Sep 12 08:58:01 UTC 2025","3733","tests","test_check_text","","","","test_check_footer_text","
-    Тест проверки текста в подвале.
-    "
-"broken","Fri Sep 12 09:18:17 UTC 2025","Fri Sep 12 09:30:22 UTC 2025","724848","tests","test_check_text","","","","test_check_center_text_after_navigation","
+"passed","Fri Sep 12 10:27:50 UTC 2025","Fri Sep 12 10:28:17 UTC 2025","27636","tests","test_check_text","","","","test_check_center_text_after_navigation","
     Тест проверки текста после перехода на страницу Elements.
+    "
+"passed","Fri Sep 12 10:27:45 UTC 2025","Fri Sep 12 10:27:49 UTC 2025","4365","tests","test_check_text","","","","test_check_footer_text","
+    Тест проверки текста в подвале.
     "
